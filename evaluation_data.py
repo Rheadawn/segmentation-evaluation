@@ -214,3 +214,10 @@ class SegmentationLength:
             maxMeters=data['maxMeters'],
             averageMeters=data['averageMeters']
         )
+    
+class CurveData:
+    def __init__(self, segmentationValue, tscCoverage, combinationCoverage, featureCoverage):
+        self.segmentationValue = segmentationValue
+        self.tscDiff = tscCoverage
+        self.combinationDiff = combinationCoverage
+        self.featureDiff = featureCoverage
