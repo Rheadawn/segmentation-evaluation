@@ -154,6 +154,15 @@ def getHalfWidthItems(evalItems, metric, optimumIndex):
 
     return [sortedEvalItems[leftIndex], sortedEvalItems[rightIndex]]
 
+# DIVERSITY
+def getSimpsonIndex(tscInstances):
+    instanceCounts = list(map(lambda tscInstance: tscInstance.count, tscInstances))
+    numberOfInstances = sum(instanceCounts)
+    probabilities = list(map(lambda count: (count*(count-1)) / (numberOfInstances*(numberOfInstances-1)), instanceCounts))
+
+    simpsonIndex = 1 - sum(probabilities)
+    return simpsonIndex
+
 # HELPER FUNCTIONS
 def getCoverages(evalItems, metric):
     coverages = []
