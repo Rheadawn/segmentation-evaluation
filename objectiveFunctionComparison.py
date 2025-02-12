@@ -2,6 +2,42 @@ import objectiveFunctionEvaluation as ofe
 from evaluation_data import CurveData
 from path_enums import Segmentation
 
+# DIFFERENCE CURVE
+def getDifferenceCurve(firstCurve, secondCurve):
+    differenceCurve = []
+
+    for firstItem, secondItem in zip(firstCurve, secondCurve):
+        if firstItem != None and secondItem != None:
+            tscDiff = firstItem.tscCoverage - secondItem.tscCoverage
+            combinationDiff = firstItem.combinationCoverage - secondItem.combinationCoverage
+            featureDiff = firstItem.featureCoverage - secondItem.featureCoverage
+            differenceCurve.append(CurveData(firstItem.segmentationValue, tscDiff, combinationDiff, featureDiff))
+
+    return differenceCurve
+
+def getAbsoluteDifferenceCurve(firstCurve, secondCurve):
+    differenceCurve = getDifferenceCurve(firstCurve, secondCurve)
+    absoluteDifferenceCurve = list(map(lambda curveItem: CurveData(curveItem.segmentationValue, abs(curveItem.tscCoverage), abs(curveItem.combinationCoverage), abs(curveItem.featureCoverage)), differenceCurve))
+    return absoluteDifferenceCurve
+
+# TSC COMPARISON
+def getEqualTscInstances(tscInstances1, tscInstances2):
+    equalTscInstances = []
+    for tscInstance1 in tscInstances1:
+        isContained = any(tscEquals(tscInstance1.instance, tscInstance2.instance) for tscInstance2 in tscInstances2)
+        if isContained:
+            equalTscInstances.append(tscInstance1.instance)
+    return equalTscInstances
+
+def getAdditionalTscInstances(tscInstances1, tscInstances2):
+    additionalTscInstances = []
+    for tscInstance1 in tscInstances1:
+        isContained = any(tscEquals(tscInstance1.instance, tscInstance2.instance) for tscInstance2 in tscInstances2)
+        if not isContained:
+            additionalTscInstances.append(tscInstance1.instance)
+    return additionalTscInstances
+
+# HELPER FUNCTIONS
 def smoothObjectiveFunction(evalItems, segmentation):
     valueRange = getObjectiveFunctionBoundaries(segmentation)
     valueBinCount = int(((valueRange["stop"] - valueRange["start"]) / valueRange["step"]) + 1)
@@ -22,23 +58,6 @@ def smoothObjectiveFunction(evalItems, segmentation):
 
     return curveItems
 
-def getDifferenceCurve(firstCurve, secondCurve):
-    differenceCurve = []
-
-    for firstItem, secondItem in zip(firstCurve, secondCurve):
-        if firstItem != None and secondItem != None:
-            tscDiff = firstItem.tscCoverage - secondItem.tscCoverage
-            combinationDiff = firstItem.combinationCoverage - secondItem.combinationCoverage
-            featureDiff = firstItem.featureCoverage - secondItem.featureCoverage
-            differenceCurve.append(CurveData(firstItem.segmentationValue, tscDiff, combinationDiff, featureDiff))
-
-    return differenceCurve
-
-def getAbsoluteDifferenceCurve(firstCurve, secondCurve):
-    differenceCurve = getDifferenceCurve(firstCurve, secondCurve)
-    absoluteDifferenceCurve = list(map(lambda curveItem: CurveData(curveItem.segmentationValue, abs(curveItem.tscCoverage), abs(curveItem.combinationCoverage), abs(curveItem.featureCoverage)), differenceCurve))
-    return absoluteDifferenceCurve
-
 def getObjectiveFunctionBoundaries(segmentation):
     match segmentation:
         case Segmentation.SECONDS:
@@ -55,7 +74,20 @@ def floatRange(start, stop, step):
         yield start
         start += step
 
-
-# Optimalwertüberlappung (Vergleicht die Position der Optimalwerte)
+def tscEquals(tsc1, tsc2):
+    if (tsc1.label != tsc2.label):
+        return False
+    
+    if (len(tsc1.outgoingEdges) != len(tsc2.outgoingEdges)):
+        return False
+    
+    if(len(tsc1.outgoingEdges) == 0):
+        return True
+    
+    for index in range(0, len(tsc1.outgoingEdges)):
+        if(not tscEquals(tsc1.outgoingEdges[index], tsc2.outgoingEdges[index])):
+            return False
+        
+    return True
 
 # TSC-Vergleich (Vergleich der Verteilung der gefundenen TSC-Instanzen)
