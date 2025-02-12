@@ -3,6 +3,8 @@ import glob
 import json
 import path_enums as pe
 import evaluation_data as ed
+import objectiveFunctionEvaluation as ofe	
+import objectiveFunctionComparison as ofc
 
 def getEvaluationData(town, segmentation, metric, tsc):
 
@@ -35,7 +37,8 @@ def getDataFromFolder(folder,tsc):
     combinationData = getCombinationData(folder, tsc)
     featureData = getFeatureData(folder, tsc)
     segmentationLength = getSegmentationLength(folder, tsc)
-    evaluationItems = ed.EvaluationItem(segmentationValues, segmentationMetaData, tscData, combinationData, featureData, segmentationLength)
+    instanceData = getInstanceData(folder, tsc)
+    evaluationItems = ed.EvaluationItem(segmentationValues, segmentationMetaData, tscData, combinationData, featureData, segmentationLength, instanceData)
 
     return evaluationItems
 
@@ -95,6 +98,28 @@ def getSegmentationLength(folder,tsc):
     segmentationLength = ed.SegmentationLength(cvForSeconds, conformityRateSeconds, minSeconds, maxSeconds, averageSeconds, cvForMeters, conformityRateMeters, minMeters, maxMeters, averageMeters)
     return segmentationLength
 
+def getInstanceData(folder,tsc):
+    validTscInstances = loadJson(os.path.join(folder, 'valid-tsc-instances-per-tsc', tsc + '.json'))
+    instances = validTscInstances['value']
+    instanceData = list(map(lambda instance: getTSCInstance(instance), instances))
+    return instanceData
+
+def getTSCInstance(instance):
+    count = len(instance['segmentIdentifiers'])
+    instance = getInstance(instance['tscInstance'])
+    return ed.TSCInstance(instance, count)
+
+def getInstance(instance):
+    label = instance['label']
+    outgoingEdges = list(map(lambda edge: getEdge(edge), instance['outgoingEdges']))
+    return ed.TSCEdge(label, outgoingEdges)
+
+def getEdge(edge):
+    destination = edge['destination']
+    label = destination['label']
+    outgoingEdges = list(map(lambda edge: getEdge(edge), destination['outgoingEdges']))
+    return ed.TSCEdge(label, outgoingEdges)
+
 def loadJson(path):
     content = open(path, 'r').read()
     return json.loads(content)
@@ -110,11 +135,3 @@ def serializeToJson(evalObj):
 def deserializeFromJson(json):
     evaluation = ed.EvaluationData.from_dict(json)
     return evaluation
-
-t1 = pe.Town.ONE
-seg = pe.Segmentation.SECONDS
-met = pe.Metric.PEDESTRIAN_CROSSED
-tsc = pe.Tsc.FULL
-
-evalData = getEvaluationData(t1.value, seg.value, met.value, tsc.value)
-print(evalData.evaluationItems[0].segmentationValues.primarySegmentationValue)

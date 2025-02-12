@@ -41,13 +41,14 @@ class EvaluationMetaData:
         )
 
 class EvaluationItem:
-    def __init__(self, segmentationValues, segmentationMetaData, tscData, combinationData, featureData, segmentationLength):
+    def __init__(self, segmentationValues, segmentationMetaData, tscData, combinationData, featureData, segmentationLength, instanceData):
         self.segmentationValues = segmentationValues
         self.segmentationMetaData = segmentationMetaData
         self.tscData = tscData
         self.combinationData = combinationData
         self.featureData = featureData
         self.segmentationLength = segmentationLength
+        self.instanceData = instanceData
     
     def to_dict(self):
         return {
@@ -56,7 +57,8 @@ class EvaluationItem:
             'tscData': self.tscData.to_dict(),
             'combinationData': self.combinationData.to_dict(),
             'featureData': self.featureData.to_dict(),
-            'segmentationLength': self.segmentationLength.to_dict()
+            'segmentationLength': self.segmentationLength.to_dict(),
+            'instanceData': [item.to_dict() for item in self.instanceData]
         }
 
     @staticmethod
@@ -67,7 +69,8 @@ class EvaluationItem:
             tscData=TscData.from_dict(data['tscData']),
             combinationData=CombinationData.from_dict(data['combinationData']),
             featureData=FeatureData.from_dict(data['featureData']),
-            segmentationLength=SegmentationLength.from_dict(data['segmentationLength'])
+            segmentationLength=SegmentationLength.from_dict(data['segmentationLength']),
+            instanceData=[TSCInstance.from_dict(item) for item in data['instanceData']]
         )
 
 class SegmentationValues:
@@ -221,3 +224,39 @@ class CurveData:
         self.tscDiff = tscCoverage
         self.combinationDiff = combinationCoverage
         self.featureDiff = featureCoverage
+
+class TSCInstance:
+    def __init__(self, instance, count):
+        self.instance = instance
+        self.count = count
+
+    def to_dict(self):
+        return {
+            'instance': self.instance.to_dict(),	
+            'count': self.count
+        }
+    
+    @staticmethod
+    def from_dict(data):
+        return TSCInstance(
+            instance=TSCEdge.from_dict(data['instance']),
+            count=data['count']
+        )
+
+class TSCEdge:
+    def __init__(self, label, outgoingEdges):
+        self.label = label
+        self.outgoingEdges = outgoingEdges
+
+    def to_dict(self):
+        return {
+            'label': self.label,
+            'outgoingEdges': [item.to_dict() for item in self.outgoingEdges]
+        }
+    
+    @staticmethod
+    def from_dict(data):
+        return TSCEdge(
+            label=data['label'],
+            outgoingEdges=[TSCEdge.from_dict(item) for item in data['outgoingEdges']]
+        )
