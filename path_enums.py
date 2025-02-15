@@ -15,7 +15,7 @@ class Segmentation(Enum):
 
 class Metric(Enum):
     TSC_COVERAGE = "tsc_coverage"
-    TSC_AND_COMBINATION_COVERAGE = "tsc_coverage_combination_coverage"
+    TSC_AND_COMBINATION_COVERAGE = "tsc_combination_coverage"
     FOLLOWING_LEADING_VEHICLE = "following"
     LANE_CHANGE = "lane_change"
     LEFT_TURN = "left_turn"
@@ -23,6 +23,9 @@ class Metric(Enum):
     OVERTAKING = "overtaking"
     PEDESTRIAN_CROSSED = "pedestrian"
     ALL = "*"
+
+    def getRelevantMetrics():
+        return [Metric.TSC_COVERAGE, Metric.FOLLOWING_LEADING_VEHICLE, Metric.LANE_CHANGE, Metric.LEFT_TURN, Metric.MUST_YIELD, Metric.OVERTAKING, Metric.PEDESTRIAN_CROSSED]
 
 class Tsc(Enum):
     FULL = "full TSC"

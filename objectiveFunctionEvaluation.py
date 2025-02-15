@@ -5,11 +5,14 @@ from path_enums import Metric
 def getGlobalMaximum(evalItems, metric):
     coverages = getCoverages(evalItems, metric)
     maxCoverage = max(coverages)
+    if maxCoverage == 0:
+        return []
     maxCoverageIndices = [index for index, coverage in enumerate(coverages) if coverage == maxCoverage]
 
     globalMaxima = []
     for index in maxCoverageIndices:
         globalMaxima.append(evalItems[index])
+
     return globalMaxima
 
 def getGlobalMinimum(evalItems, metric):
@@ -113,6 +116,38 @@ def getLocalVarianceAroundOptimum(evalItems, metric, optimumIndex, localityRange
     leftIndex = max(0, optimumIndex - localityRange)
     rightIndex = min(len(sortedEvalItems) - 1, optimumIndex + localityRange)
     return getVariance(sortedEvalItems[leftIndex:rightIndex+1], metric)
+
+def getGlobalOptimumInterval(evalItems, metric, threshold):
+    sortedEvalItems = sortByPrimarySegmentationValue(evalItems)
+    globalOptima = getGlobalMaximum(sortedEvalItems, metric)
+    if len(globalOptima) == 0:
+        return []
+
+    coverages = getCoverages(sortedEvalItems, metric)
+    intervals = []
+
+    for optimum in globalOptima:
+        optimumIndex = sortedEvalItems.index(optimum)
+        interval = []
+        for i in range(optimumIndex, -1, -1):
+            if coverages[i] < coverages[optimumIndex] * threshold:
+                leftBound = i+1 if i < optimumIndex else i
+                interval.append(sortedEvalItems[leftBound].segmentationValues.primarySegmentationValue)
+                break
+        if len(interval) == 0:
+            interval.append(sortedEvalItems[0].segmentationValues.primarySegmentationValue)
+        interval.append(sortedEvalItems[optimumIndex].segmentationValues.primarySegmentationValue)
+        for i in range(optimumIndex, len(coverages)):
+            if coverages[i] < coverages[optimumIndex] * threshold:
+                rightBound = i-1 if i > optimumIndex else i
+                interval.append(sortedEvalItems[rightBound].segmentationValues.primarySegmentationValue)
+                break
+        if len(interval) == 2:
+            interval.append(sortedEvalItems[len(sortedEvalItems)-1].segmentationValues.primarySegmentationValue)
+        intervals.append(interval)
+    
+    return intervals
+
 
 def getOptimumIntervals(evalItems, metric, optimumIndex, threshold):
     sortedEvalItems = sortByPrimarySegmentationValue(evalItems)
