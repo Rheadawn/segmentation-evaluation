@@ -157,7 +157,7 @@ class CombinationData:
 
 class FeatureData:
     def __init__(self, foundFeatures, missedFeatures):
-        self.featureCoverage = foundFeatures / (foundFeatures + missedFeatures)
+        self.featureCoverage = foundFeatures / max((foundFeatures + missedFeatures),1)
         self.foundFeatures = foundFeatures
         self.missedFeatures = missedFeatures
     

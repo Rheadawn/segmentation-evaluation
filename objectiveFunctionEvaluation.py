@@ -1,12 +1,13 @@
 from math import ceil, sqrt
 from path_enums import Metric
+import evaluation_data as ed
 
 # EXTREME VALUES
 def getGlobalMaximum(evalItems, metric):
     coverages = getCoverages(evalItems, metric)
     maxCoverage = max(coverages)
     if maxCoverage == 0:
-        return []
+        return [ed.EvaluationItem(any, any, ed.TscData(0,1), any, any, any, any)]
     maxCoverageIndices = [index for index, coverage in enumerate(coverages) if coverage == maxCoverage]
 
     globalMaxima = []
@@ -127,6 +128,9 @@ def getGlobalOptimumInterval(evalItems, metric, threshold):
     intervals = []
 
     for optimum in globalOptima:
+        if optimum not in sortedEvalItems:
+            continue
+            
         optimumIndex = sortedEvalItems.index(optimum)
         interval = []
         for i in range(optimumIndex, -1, -1):

@@ -50,29 +50,43 @@ def saveScatterPlot(filePath, xAxes, yAxes, labels, title, xLabel, yLabel):
 
     fig.savefig(filePath, dpi=600)
 
-def saveDumbellGraph(filePath, interval_groups, labels, title):
-    fig, ax = plt.subplots(figsize=(16, 6))
+def saveDumbellGraph(filePath, interval_groups, globalMaxima, labels, title):
+    fig, ax = plt.subplots(figsize=(12, 3))
     
     # Get tab10 colormap
     colors = plt.cm.tab10(np.linspace(0, 1, len(interval_groups)))
     
+    # Create legend handles
+    legend_handles = []
+    
     # Assuming interval_groups is a list of lists, where each inner list contains tuples of (start, optimum, end)
-    for i, (intervals, color) in enumerate(zip(interval_groups, colors)):
-        for start, optimum, end in intervals:
-            ax.plot([start, end], [i, i], '-o', markersize=4, color=color)
-            ax.plot([optimum, optimum], [i-0.05, i+0.05], '-', linewidth=2, color=color)
+    for i, (intervals, globalMaximum, color) in enumerate(zip(interval_groups, globalMaxima, colors)):
+        if intervals:  # Only process if intervals is not empty
+            optimum = intervals[0][1]  # Get optimum from first interval
+            line = ax.plot([0], [0], color=color, label=f'{labels[i]} (opt: {globalMaximum:.3f})')
+            legend_handles.extend(line)
+            
+            # Reverse the y-position so first town is at the top
+            y_pos = len(labels) - 1 - i
+            
+            for start, optimum, end in intervals:
+                ax.plot([start, end], [y_pos, y_pos], '-o', markersize=4, color=color)
+                ax.plot([optimum, optimum], [y_pos-0.05, y_pos+0.05], '-', linewidth=2, color=color)
     
     ax.set_yticks(range(len(labels)))
-    ax.set_yticklabels(labels)
+    # Reverse the labels to match the reversed plotting order
+    ax.set_yticklabels(labels[::-1])
     
     ax.grid(which="major", axis='x', color='#758D99', alpha=0.6)
     ax.spines[['top', 'right']].set_visible(False)
     
     plt.title(title)
+    ax.legend(handles=legend_handles, loc='upper right')
+    
+    plt.tight_layout()
     
     fig.savefig(filePath, dpi=600)
-
-    #filePath, xAxis, yAxis, title, xLabel, yLabel
+    plt.close(fig)
 
 def saveDumbellGraphAnd2DGraph(filePath, interval_groups, labels, title, xAxis, yAxis, xLabel, yLabel):
     # Create figure with two subplots, with different heights (3:1 ratio)

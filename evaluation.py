@@ -11,7 +11,6 @@ def showObjectiveFunction(town, segmentation, metric, tsc):
     yAxis = ofe.getCoverages(sortedEvalItems, metric)
     vis.save2DGraph('plots/objective_functions/' + town + '_' + segmentation + '_' + metric + '_' + tsc + '.png', xAxis, yAxis, getTitle(segmentation), getXAxisLabel(segmentation), 'Abdeckung')
 
-
 def showBrokenMetric():
     evalData = fl.getEvaluationData(pe.Town.ONE.value, pe.Segmentation.SECONDS.value, pe.Metric.TSC_COVERAGE.value, pe.Tsc.FULL.value)
     evalData2 = fl.getEvaluationData(pe.Town.ONE.value, pe.Segmentation.SECONDS.value, pe.Metric.TSC_AND_COMBINATION_COVERAGE.value, pe.Tsc.FULL.value)
@@ -50,16 +49,43 @@ def compareOptimumPositionsOfMetrics(town, segmentation, threshold):
         intervals = ofe.getGlobalOptimumInterval(evalItems, metric, threshold)
         metricResults.append(intervals)
 
-    labels = list(map(lambda metric: metric.value, metrics))  
-
-
+    labels = list(map(lambda metric: pe.Metric.getMetricTitle(metric), metrics))  
     evalData = fl.getEvaluationData(town, segmentation, pe.Metric.TSC_COVERAGE.value, pe.Tsc.FULL.value)
     sortedEvalItems = ofe.sortByPrimarySegmentationValue(evalData.evaluationItems)
     xAxis = list(map(lambda item: item.segmentationValues.primarySegmentationValue, sortedEvalItems))
     yAxis = list(map(lambda item: item.tscData.tscCoverage, sortedEvalItems))
 
-    #vis.saveDumbellGraph('plots/metric_comparison/optimum_positions_' + segmentation + '_' + str(threshold) + '_' + '.png', metricResults, labels, getTitle(segmentation))
     vis.saveDumbellGraphAnd2DGraph('plots/metric_comparison/optimum_positions_' + town + "_" + segmentation + '_' + str(threshold) + '_2D.png', metricResults, labels, getTitle(segmentation), xAxis, yAxis, getXAxisLabel(segmentation), 'Szenarioabdeckung')
+
+def compareOptimumPositionsOfTowns(segmentation, threshold):
+    townResults = []
+    globalMaxima = []
+    towns = pe.Town.getRelevantTowns()
+
+    for town in towns:
+        evalItems = fl.getEvaluationData(town.value, segmentation, pe.Metric.TSC_COVERAGE.value, pe.Tsc.FULL.value).evaluationItems
+        globalMaximum = ofe.getGlobalMaximum(evalItems, pe.Metric.TSC_COVERAGE)[0].tscData.tscCoverage
+        globalMaxima.append(globalMaximum)
+        intervals = ofe.getGlobalOptimumInterval(evalItems, pe.Metric.TSC_COVERAGE, threshold)
+        townResults.append(intervals)
+
+    labels = list(map(lambda town: town.value, towns))  
+    vis.saveDumbellGraph('plots/town_comparison/optimum_positions_towns_' + segmentation + '_' + str(threshold) + '.png', townResults, globalMaxima, labels, getTitle(segmentation))
+
+def compareOptimumPositionsOfTSCs(segmentation, threshold):
+    tscResults = []
+    globalMaxima = []
+    tscs = pe.Tsc.getRelevantTSCs()
+
+    for tsc in tscs:
+        evalItems = fl.getEvaluationData(pe.Town.ONE.value, segmentation, pe.Metric.TSC_COVERAGE.value, tsc.value).evaluationItems
+        globalMaximum = ofe.getGlobalMaximum(evalItems, pe.Metric.TSC_COVERAGE)[0].tscData.tscCoverage
+        globalMaxima.append(globalMaximum)
+        intervals = ofe.getGlobalOptimumInterval(evalItems, pe.Metric.TSC_COVERAGE, threshold)
+        tscResults.append(intervals)
+
+    labels = list(map(lambda tsc: tsc.value, tscs))
+    vis.saveDumbellGraph('plots/tsc_comparison/optimum_positions_tscs_' + segmentation + '_' + str(threshold) + '.png', tscResults, globalMaxima, labels, getTitle(segmentation))
 
 def getTitle(segmentation):
     match segmentation:
@@ -83,6 +109,4 @@ def getXAxisLabel(segmentation):
         case _:
             return 'Geschwindigkeit'
 
-for threshold in (0.9,0.95,0.99):
-    for town in (pe.Town.ONE.value, pe.Town.TWO.value, pe.Town.TEN.value):
-            compareOptimumPositionsOfMetrics(town, pe.Segmentation.BREMSWEG.value, threshold)
+compareOptimumPositionsOfTSCs(pe.Segmentation.BREMSWEG.value, 0.95)
